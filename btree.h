@@ -1,5 +1,5 @@
 
-#define ORDEM_MAX 7
+#define ORDEM_MAX 6
 
 typedef struct no no;
 
@@ -8,14 +8,12 @@ typedef struct btree btree;
 
 btree* criarBTree ();
 no *inicializarNo(int folha);
+no* getRaiz(btree *arv);
 void inserir(btree *arv, int chave);
 void inserirNaoCheio(no *no, int chave);
-void split();
-int remover();
-void emprestar;
-void unir();
-void buscar();
-
-
-
-
+void split(no *pai, int i);
+void imprimirEmOrdem(no *raiz);
+//int remover();
+//void emprestar;
+//void unir();
+//void buscar();

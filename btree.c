@@ -94,7 +94,7 @@ void inserirNaoCheio(no *no, int chave, int index){
             }
         }
         //chama a função de novo para inserir o valor no seu nó correto
-        inserirNaoCheio(no->filhos[i], chave);
+        inserirNaoCheio(no->filhos[i], chave, index);
     }
 
 }
@@ -156,7 +156,7 @@ void imprimirEmOrdem(no *raiz) {
 }
 
 int buscar(no *no, int chave){
-    int i=1
+    int i=1;
     while ((i <= no->nroChaves) && (chave > no->chaves[i])){
         i++;
     }
@@ -183,9 +183,9 @@ int remover(no *no, int chave){
             return -1;
         } else {
             if(no->filhos[i]!=NULL && no->filhos[i]->nroChaves < ORDEM_MAX/2-1){
-                if(i>0 && no->filho[i-1]!=NULL && no->filho[i-1]>ORDEM_MAX/2-1 ){
+                if(i>0 && no->filhos[i-1]!=NULL && no->filhos[i-1]->nroChaves >ORDEM_MAX/2-1 ){
                     emprestar(no, chave, i-1);
-                } else if(i<= ORDEM_MAX && no->filho[i+1]!=NULL && no->filho[i+1]>ORDEM_MAX/2-1){
+                } else if(i<= ORDEM_MAX && no->filhos[i+1]!=NULL && no->filhos[i+1]->nroChaves >ORDEM_MAX/2-1){
                     emprestar(no, chave, i+1);
                 } else {
                     unir(no, chave, i);
@@ -203,7 +203,7 @@ int remover(no *no, int chave){
     }
 }
 
-removerFolha(no *no, int chave, int indice){
+void removerFolha(no *no, int chave, int indice){
 
         int j=indice;
         while (j < no->nroChaves){
@@ -214,84 +214,88 @@ removerFolha(no *no, int chave, int indice){
         no->nroChaves--;
 }
 
-void removerNaoFolha(no *no, int chave, int indice){
-    if (no->filhos[indice]->nroChaves >= ORDEM_MAX/2){
-        no *y=no->filhos[indice];
+void removerNaoFolha(no *removido, int chave, int indice){
+    if (removido->filhos[indice]->nroChaves >= ORDEM_MAX/2){
+        no *y=removido->filhos[indice];
         while (y->folha == 0){
             y=y->filhos[y->nroChaves];
         }
-        no->chaves[indice]=y->chaves[y->nroChaves];
-        no->index[indice]=y->index[y->nroChaves];
+        removido->chaves[indice]=y->chaves[y->nroChaves];
+        removido->index[indice]=y->index[y->nroChaves];
         remover(y, y->chaves[y->nroChaves]);
-    } else if (no->filhos[indice+1]->nroChaves >= ORDEM_MAX/2){
-        no *y=no->filhos[indice+1];
+    } else if (removido->filhos[indice+1]->nroChaves >= ORDEM_MAX/2){
+        no *y=removido->filhos[indice+1];
         while (y->folha == 0){
             y=y->filhos[0];
         }
-        no->chaves[indice]=y->chaves[0];
-        no->index[indice]=y->index[0];
+        removido->chaves[indice]=y->chaves[0];
+        removido->index[indice]=y->index[0];
         remover(y, y->chaves[0]);
     } else {
-        unir(no, chave, indice);
+        unir(removido, chave, indice);
     }
 }
 
-void unir(no *no, int chave, int indice){
-    if(no->filhos[indice-1]!=NULL){
-        no *y=no->filhos[indice-1];
-        no *z=no->filhos[indice];
-        y->chaves[y->nroChaves]=no->chaves[indice-1];
-        y->index[y->nroChaves]=no->index[indice-1];
+void unir(no *x, int chave, int indice){
+    no *y;
+    no *z;
+
+    if(x->filhos[indice-1]!=NULL){
+        y=x->filhos[indice-1];
+        z=x->filhos[indice];
+        y->chaves[y->nroChaves]=x->chaves[indice-1];
+        y->index[y->nroChaves]=x->index[indice-1];
     }else{
-        no *y=no->filhos[indice];
-        no *z=no->filhos[indice+1];
-        y->chaves[y->nroChaves]=no->chaves[indice];
-        y->index[y->nroChaves]=no->index[indice];
+        y=x->filhos[indice];
+        z=x->filhos[indice+1];
+        y->chaves[y->nroChaves]=x->chaves[indice];
+        y->index[y->nroChaves]=x->index[indice];
     }
+
     y->nroChaves++;
-    for (int i=0; i<z->nroChaves; i++){
+    for (int i=0; i< z->nroChaves; i++){
         y->chaves[y->nroChaves]=z->chaves[i];
         y->index[y->nroChaves]=z->index[i];
         y->nroChaves++;
     }
-    for (int i=indice; i<no->nroChaves; i++){
-        no->chaves[i]=no->chaves[i+1];
-        no->index[i]=no->index[i+1];
+    for (int i=indice; i<x->nroChaves; i++){
+        x->chaves[i]=x->chaves[i+1];
+        x->index[i]=x->index[i+1];
     }
-    for (int i=indice+1; i<no->nroChaves; i++){
-        no->filhos[i]=no->filhos[i+1];
+    for (int i=indice+1; i<x->nroChaves; i++){
+        x->filhos[i]=x->filhos[i+1];
     }
-    no->nroChaves--;
+    x->nroChaves--;
     free(z);
 }
 
-void emprestar(no *no, int chave, int indice){
-    if(no->filhos[indice-1]!=NULL){
-        no *y=no->filhos[indice-1];
-        no *z=no->filhos[indice];
-        y->chaves[y->nroChaves]=no->chaves[0];
-        y->index[y->nroChaves]=no->index[0];
+void emprestar(no *x, int chave, int indice){
+    if(x->filhos[indice-1]!=NULL){
+        no *y=x->filhos[indice-1];
+        no *z=x->filhos[indice];
+        y->chaves[y->nroChaves]=x->chaves[0];
+        y->index[y->nroChaves]=x->index[0];
         y->nroChaves++;
-        no->chaves[0]=y->chaves[0];
-        no->index[0]=y->index[0];
-        no->nroChaves--;
+        x->chaves[0]=y->chaves[0];
+        x->index[0]=y->index[0];
+        x->nroChaves--;
         for (int i=0; i<z->nroChaves; i++){
             z->chaves[i]=z->chaves[i+1];
             z->index[i]=z->index[i+1];
         }
         z->nroChaves--;
     }else{
-        no *y=no->filhos[indice];
-        no *z=no->filhos[indice+1];
+        no *y=x->filhos[indice];
+        no *z=x->filhos[indice+1];
          for (int i=z->nroChaves; i>0; i--){
             z->chaves[i]=z->chaves[i-1];
             z->index[i]=z->index[i-1];
         }
-        z->chaves[0]=no->chaves[no->nroChaves-1];
-        z->index[0]=no->index[no->nroChaves-1];
-        z->NroChaves++;
-        no->chaves[no->nroChaves-1]=y->chaves[y->nroChaves-1];
-        no->index[no->nroChaves-1]=y->index[y->nroChaves-1];
+        z->chaves[0]=x->chaves[x->nroChaves-1];
+        z->index[0]=x->index[x->nroChaves-1];
+        z->nroChaves++;
+        x->chaves[x->nroChaves-1]=y->chaves[y->nroChaves-1];
+        x->index[x->nroChaves-1]=y->index[y->nroChaves-1];
         y->nroChaves--;
     }
 }

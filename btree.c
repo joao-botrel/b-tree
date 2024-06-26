@@ -4,8 +4,7 @@
 
 typedef struct no {
     int nroChaves; //numero de chaves atuais no nó
-    int chaves[ORDEM_MAX-1]; //valor das chaves 
-    int index[ORDEM_MAX-1];
+    chave chaves[ORDEM_MAX - 1]; //vetor de chaves
     struct no *pai;
     struct no *filhos[ORDEM_MAX]; //ponteiros para os filhos do nó
     int folha; //flag para indicar se o nó é folha ou não, se é folha é 1, e caso contrário é 0
@@ -16,6 +15,11 @@ typedef struct btree {
     struct no *raiz;
     int nroChaves;
 } btree;
+
+typedef struct chave {
+    int chave;
+    int indice;
+} chave;
 
 //função para inicializar todos os dados do nó
 no *inicializarNo(int folha){
@@ -51,8 +55,8 @@ no *getRaiz(btree *arv){
 void inserir(btree *arv, int chave, int index){
     if (arv->raiz == NULL){ //primeiro nó da árvore, é a raíz, então é necessário ajustar todos detalhes quanto à isso
         no* novoNo = inicializarNo(1);
-        novoNo->chaves[0] = chave;
-        novoNo->index[0] = index;
+        novoNo->chaves[0].chave = chave;
+        novoNo->chaves[0].indice = index;
         novoNo->nroChaves++;
         arv->raiz = novoNo;
     } else { //caso não for raíz,
@@ -73,25 +77,25 @@ void inserirNaoCheio(no *no, int chave, int index){
     int i = no->nroChaves - 1;
     
     if (no->folha == 1){ //se o nó for folha, basta inserir nele
-        while (i >= 0 && no->chaves[i] > chave){ //achando a posição correta do valor nas chaves do nó
-            no->chaves[i + 1] = no->chaves[i];
-            no->index[i + 1] = no->index[i];
+        while (i >= 0 && no->chaves[i].chave > chave){ //achando a posição correta do valor nas chaves do nó
+            no->chaves[i + 1].chave = no->chaves[i].chave;
+            no->chaves[i + 1].indice = no->chaves[i].indice;
             i--;
         }
         //consertando os outros dados do nó
-        no->chaves[i + 1] = chave;
-        no->index[i + 1] = index;
+        no->chaves[i + 1].chave = chave;
+        no->chaves[i + 1].indice = index;
         no->nroChaves++;
     } else {
         //se o nó não for folha, procurar onde deve inserir
-        while (i >= 0 && no->chaves[i] > chave){
+        while (i >= 0 && no->chaves[i].chave > chave){
             i--;
         }
         i++;
         //se o nó que for inserir estiver cheio, é preciso dar split nele
         if (no->filhos[i]->nroChaves == ORDEM_MAX - 1){
             split(no, i);
-            if (no->chaves[i] < chave) {
+            if (no->chaves[i].chave < chave) {
                 i++;
             }
         }
@@ -111,8 +115,8 @@ void split(no *pai, int i){
     //Os dois primeiros loops são feitos para mover os dados dos filhos do nó pai para o novo nó filho
     //Loop para as chaves
     for (int j = 0; j < ORDEM_MAX / 2 - 1; j++){
-        novoNo->chaves[j] = y->chaves[j + ORDEM_MAX / 2];
-        novoNo->index[j] = y->index[j + ORDEM_MAX / 2];
+        novoNo->chaves[j].chave = y->chaves[j + ORDEM_MAX / 2].chave;
+        novoNo->chaves[j].indice = y->chaves[j + ORDEM_MAX / 2].indice;
     }
 
     //Loop para os ponteiros dos filhos
@@ -138,12 +142,12 @@ void split(no *pai, int i){
 
     //Neste loop, é para achar o lugar correto para inseri-lo nas chaves
     for (int j = pai->nroChaves - 1; j >= i; j--){
-        pai->chaves[j + 1] = pai->chaves[j];
-        pai->index[j + 1] = pai->index[j];
+        pai->chaves[j + 1].chave = pai->chaves[j].chave;
+        pai->chaves[j + 1].indice = pai->chaves[j].indice;
     }
     //Lugar achado, inserindo:
-    pai->chaves[i] = y->chaves[ORDEM_MAX / 2 - 1];  
-    pai->index[i] = y->index[ORDEM_MAX / 2 - 1];  
+    pai->chaves[i].chave = y->chaves[ORDEM_MAX / 2 - 1].chave;  
+    pai->chaves[i].indice = y->chaves[ORDEM_MAX / 2 - 1].indice;  
     pai->nroChaves++;
 }
 
@@ -153,9 +157,9 @@ void imprimirEmOrdem(no *raiz) {
         int i;
         for (i = 0; i < raiz->nroChaves; i++) {
             imprimirEmOrdem(raiz->filhos[i]);
-            printf("Nó: %d ", raiz->chaves[i]);
+            printf("Nó: %d ", raiz->chaves[i].chave);
             if (raiz->pai != NULL) {
-                printf("(Pai: %d) ", raiz->pai->chaves[0]); // Assumindo que estamos imprimindo a primeira chave do pai
+                printf("(Pai: %d) ", raiz->pai->chaves[0].chave); // Assumindo que estamos imprimindo a primeira chave do pai
             } else {
                 printf("(Pai: NULL) ");
             }
@@ -168,11 +172,11 @@ void imprimirEmOrdem(no *raiz) {
 
 int buscar(no *no, int chave){
     int i=1;
-    while ((i <= no->nroChaves) && (chave > no->chaves[i])){
+    while ((i <= no->nroChaves) && (chave > no->chaves[i].chave)){
         i++;
     }
-    if(i <= no->nroChaves && chave == no->chaves[i]){
-        return no->index[i];
+    if(i <= no->nroChaves && chave == no->chaves[i].chave){
+        return no->chaves[i].chave;
     } else if (no->folha == 1){
         return -1;
     } else {
@@ -184,10 +188,10 @@ int remover(no *no, int chave){
     int indice=-1;
     int i=0;
     while (indice==-1){
-        while ((i <= no->nroChaves) && (chave > no->chaves[i])){
+        while ((i <= no->nroChaves) && (chave > no->chaves[i].chave)){
             i++;
         }
-        if(i <= no->nroChaves && chave == no->chaves[i]){
+        if(i <= no->nroChaves && chave == no->chaves[i].chave){
             indice=i;
 
         } else if (no->folha == 1){
@@ -218,8 +222,8 @@ void removerFolha(no *no, int chave, int indice){
 
         int j=indice;
         while (j < no->nroChaves){
-            no->chaves[j]=no->chaves[j+1];
-            no->index[j]=no->index[j+1];
+            no->chaves[j].chave=no->chaves[j+1].chave;
+            no->chaves[j].indice=no->chaves[j+1].indice;
             j++;
         }
         no->nroChaves--;
@@ -231,17 +235,17 @@ void removerNaoFolha(no *removido, int chave, int indice){
         while (y->folha == 0){
             y=y->filhos[y->nroChaves];
         }
-        removido->chaves[indice]=y->chaves[y->nroChaves];
-        removido->index[indice]=y->index[y->nroChaves];
-        remover(y, y->chaves[y->nroChaves]);
+        removido->chaves[indice].chave=y->chaves[y->nroChaves].chave;
+        removido->chaves[indice].indice=y->chaves[y->nroChaves].indice;
+        remover(y, y->chaves[y->nroChaves].chave);
     } else if (removido->filhos[indice+1]->nroChaves >= ORDEM_MAX/2){
         no *y=removido->filhos[indice+1];
         while (y->folha == 0){
             y=y->filhos[0];
         }
-        removido->chaves[indice]=y->chaves[0];
-        removido->index[indice]=y->index[0];
-        remover(y, y->chaves[0]);
+        removido->chaves[indice].chave=y->chaves[0].chave;
+        removido->chaves[indice].indice=y->chaves[0].indice;
+        remover(y, y->chaves[0].chave);
     } else {
         unir(removido, chave, indice);
     }
@@ -254,24 +258,24 @@ void unir(no *x, int chave, int indice){
     if(x->filhos[indice-1]!=NULL){
         y=x->filhos[indice-1];
         z=x->filhos[indice];
-        y->chaves[y->nroChaves]=x->chaves[indice-1];
-        y->index[y->nroChaves]=x->index[indice-1];
+        y->chaves[y->nroChaves].chave=x->chaves[indice-1].chave;
+        y->chaves[y->nroChaves].indice=x->chaves[indice-1].indice;
     }else{
         y=x->filhos[indice];
         z=x->filhos[indice+1];
-        y->chaves[y->nroChaves]=x->chaves[indice];
-        y->index[y->nroChaves]=x->index[indice];
+        y->chaves[y->nroChaves].chave=x->chaves[indice].chave;
+        y->chaves[y->nroChaves].indice=x->chaves[indice].indice;
     }
 
     y->nroChaves++;
     for (int i=0; i< z->nroChaves; i++){
-        y->chaves[y->nroChaves]=z->chaves[i];
-        y->index[y->nroChaves]=z->index[i];
+        y->chaves[y->nroChaves].chave=z->chaves[i].chave;
+        y->chaves[y->nroChaves].indice=z->chaves[i].indice;
         y->nroChaves++;
     }
     for (int i=indice; i<x->nroChaves; i++){
-        x->chaves[i]=x->chaves[i+1];
-        x->index[i]=x->index[i+1];
+        x->chaves[i].chave=x->chaves[i+1].chave;
+        x->chaves[i].indice=x->chaves[i+1].indice;
     }
     for (int i=indice+1; i<x->nroChaves; i++){
         x->filhos[i]=x->filhos[i+1];
@@ -284,29 +288,29 @@ void emprestar(no *x, int chave, int indice){
     if(x->filhos[indice-1]!=NULL){
         no *y=x->filhos[indice-1];
         no *z=x->filhos[indice];
-        y->chaves[y->nroChaves]=x->chaves[0];
-        y->index[y->nroChaves]=x->index[0];
+        y->chaves[y->nroChaves].chave=x->chaves[0].chave;
+        y->chaves[y->nroChaves].indice=x->chaves[0].indice;
         y->nroChaves++;
-        x->chaves[0]=y->chaves[0];
-        x->index[0]=y->index[0];
+        x->chaves[0].chave=y->chaves[0].chave;
+        x->chaves[0].indice=y->chaves[0].indice;
         x->nroChaves--;
         for (int i=0; i<z->nroChaves; i++){
-            z->chaves[i]=z->chaves[i+1];
-            z->index[i]=z->index[i+1];
+            z->chaves[i].chave=z->chaves[i+1].chave;
+            z->chaves[i].indice=z->chaves[i+1].indice;
         }
         z->nroChaves--;
     }else{
         no *y=x->filhos[indice];
         no *z=x->filhos[indice+1];
          for (int i=z->nroChaves; i>0; i--){
-            z->chaves[i]=z->chaves[i-1];
-            z->index[i]=z->index[i-1];
+            z->chaves[i].chave=z->chaves[i-1].chave;
+            z->chaves[i].indice=z->chaves[i-1].indice;
         }
         z->chaves[0]=x->chaves[x->nroChaves-1];
-        z->index[0]=x->index[x->nroChaves-1];
+        z->chaves[0].indice=x->chaves[x->nroChaves-1].indice;
         z->nroChaves++;
-        x->chaves[x->nroChaves-1]=y->chaves[y->nroChaves-1];
-        x->index[x->nroChaves-1]=y->index[y->nroChaves-1];
+        x->chaves[x->nroChaves-1].chave=y->chaves[y->nroChaves-1].chave;
+        x->chaves[x->nroChaves-1].indice=y->chaves[y->nroChaves-1].indice;
         y->nroChaves--;
     }
 }

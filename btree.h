@@ -6,6 +6,8 @@ typedef struct no no;
 //estrutura da b-tree
 typedef struct btree btree; 
 
+typedef struct chave chave;
+
 btree* criarBTree ();
 no *inicializarNo(int folha);
 no* getRaiz(btree *arv);

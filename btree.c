@@ -4,14 +4,14 @@
 
 typedef struct no {
     int nroChaves; //numero de chaves atuais no nó
-    //conteúdo do arquivo;
     int chaves[ORDEM_MAX-1]; //valor das chaves 
-    int index[ORDEM_MAX-1]; //índice do valor no arquivo
+    int index[ORDEM_MAX-1];
+    struct no *pai;
     struct no *filhos[ORDEM_MAX]; //ponteiros para os filhos do nó
     int folha; //flag para indicar se o nó é folha ou não, se é folha é 1, e caso contrário é 0
 } no;
 
-//estrutura da b-tree
+//estrutura da btree
 typedef struct btree {
     struct no *raiz;
     int nroChaves;
@@ -24,6 +24,7 @@ no *inicializarNo(int folha){
     if (!novoNo) exit(1);
     novoNo->nroChaves = 0;
     novoNo->folha = folha;
+    novoNo->pai = NULL;
     for (int i = 0; i < ORDEM_MAX; i++) {
         novoNo->filhos[i] = NULL;
     }
@@ -55,16 +56,16 @@ void inserir(btree *arv, int chave, int index){
         novoNo->nroChaves++;
         arv->raiz = novoNo;
     } else { //caso não for raíz,
-        if (arv->raiz->nroChaves  == ORDEM_MAX - 1){ //vai ter que dar split na raiz caso ela esteja na capacidade máxima
-        no *novaRaiz =  inicializarNo(0);
-        novaRaiz->filhos[0] = arv->raiz;
-        split(novaRaiz, 0);
-        arv->raiz = novaRaiz;
+        if (arv->raiz->nroChaves == ORDEM_MAX - 1){ //vai ter que dar split na raiz caso ela esteja na capacidade máxima
+            no *novaRaiz = inicializarNo(0);
+            novaRaiz->filhos[0] = arv->raiz;
+            arv->raiz->pai = novaRaiz; // Atualiza o ponteiro pai
+            split(novaRaiz, 0);
+            arv->raiz = novaRaiz;
         } 
         inserirNaoCheio(arv->raiz, chave, index); //se não, ou é só inserir no nó ou é em outro nó (filhos da raíz)
         arv->nroChaves++;
     }
-
 }
 
 //função para inserir em um nó que não está cheio na b-tree
@@ -78,14 +79,15 @@ void inserirNaoCheio(no *no, int chave, int index){
             i--;
         }
         //consertando os outros dados do nó
-        no->chaves[i+ 1] = chave;
+        no->chaves[i + 1] = chave;
         no->index[i + 1] = index;
         no->nroChaves++;
     } else {
         //se o nó não for folha, procurar onde deve inserir
         while (i >= 0 && no->chaves[i] > chave){
             i--;
-        } i++;
+        }
+        i++;
         //se o nó que for inserir estiver cheio, é preciso dar split nele
         if (no->filhos[i]->nroChaves == ORDEM_MAX - 1){
             split(no, i);
@@ -96,31 +98,34 @@ void inserirNaoCheio(no *no, int chave, int index){
         //chama a função de novo para inserir o valor no seu nó correto
         inserirNaoCheio(no->filhos[i], chave, index);
     }
-
 }
 
 //função que realiza a operação de split na b-tree
-void split (no *pai, int i){
+void split(no *pai, int i){
     no *y = pai->filhos[i];
     no *novoNo = inicializarNo(y->folha);
 
-    novoNo->nroChaves = ORDEM_MAX/2 - 1;
+    novoNo->nroChaves = ORDEM_MAX / 2 - 1;
+    novoNo->pai = pai; // Atualiza o ponteiro pai do novo nó
 
     //Os dois primeiros loops são feitos para mover os dados dos filhos do nó pai para o novo nó filho
     //Loop para as chaves
-    for (int i = 0; i < ORDEM_MAX/2 - 1 ; i++){
-        novoNo->chaves[i] = y->chaves[i + ORDEM_MAX/2];
-        novoNo->index[i] = y->index[i + ORDEM_MAX/2];
+    for (int j = 0; j < ORDEM_MAX / 2 - 1; j++){
+        novoNo->chaves[j] = y->chaves[j + ORDEM_MAX / 2];
+        novoNo->index[j] = y->index[j + ORDEM_MAX / 2];
     }
 
     //Loop para os ponteiros dos filhos
     if (y->folha == 0){
-       for (int i=0; i<ORDEM_MAX/2; i++){
-        novoNo->filhos[i] = y->filhos[i + ORDEM_MAX/2];
-       }
+        for (int j = 0; j < ORDEM_MAX / 2; j++){
+            novoNo->filhos[j] = y->filhos[j + ORDEM_MAX / 2];
+            if (novoNo->filhos[j] != NULL) {
+                novoNo->filhos[j]->pai = novoNo; // Atualiza o ponteiro pai dos filhos do novo nó
+            }
+        }
     }
 
-    y->nroChaves = ORDEM_MAX/2 - 1;
+    y->nroChaves = ORDEM_MAX / 2 - 1;
 
     //Os dois últimos loops são shifts para inserir o novo filho no seu lugar certo no nó pai
     //Neste loop, é para achar o lugar correto para inseri-lo nos ponteiros de filhos
@@ -137,10 +142,9 @@ void split (no *pai, int i){
         pai->index[j + 1] = pai->index[j];
     }
     //Lugar achado, inserindo:
-    pai->chaves[i] = y->chaves[ORDEM_MAX/2 - 1];  
-    pai->index[i] = y->index[ORDEM_MAX/2 - 1];  
+    pai->chaves[i] = y->chaves[ORDEM_MAX / 2 - 1];  
+    pai->index[i] = y->index[ORDEM_MAX / 2 - 1];  
     pai->nroChaves++;
-
 }
 
 //função para imprimir a b-tree em ordem
@@ -149,11 +153,18 @@ void imprimirEmOrdem(no *raiz) {
         int i;
         for (i = 0; i < raiz->nroChaves; i++) {
             imprimirEmOrdem(raiz->filhos[i]);
-            printf("%d ", raiz->chaves[i]);
+            printf("Nó: %d ", raiz->chaves[i]);
+            if (raiz->pai != NULL) {
+                printf("(Pai: %d) ", raiz->pai->chaves[0]); // Assumindo que estamos imprimindo a primeira chave do pai
+            } else {
+                printf("(Pai: NULL) ");
+            }
+            printf("\n");
         }
         imprimirEmOrdem(raiz->filhos[i]);
     }
 }
+
 
 int buscar(no *no, int chave){
     int i=1;

@@ -1,5 +1,5 @@
 
-#define ORDEM_MAX 6
+#define ORDEM_MAX 4
 
 typedef struct no no;
 

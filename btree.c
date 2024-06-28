@@ -1,6 +1,7 @@
 #include "btree.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 typedef struct chave
 {
@@ -352,8 +353,9 @@ void unir(btree *arv, no *x, no *y, int indice)
     if (y->folha == 0)
     {
         x->filhos[x->nroChaves] = y->filhos[i];
-        if(x->filhos[x->nroChaves] != NULL){
-        x->filhos[x->nroChaves]->pai = x;
+        if (x->filhos[x->nroChaves] != NULL)
+        {
+            x->filhos[x->nroChaves]->pai = x;
         }
     }
     free(y);
@@ -463,3 +465,73 @@ void balancear(btree *arv, no *no)
         unir(arv, no->pai->filhos[indice - 1], no, indice - 1);
     }
 }
+
+void benchmarkBusca()
+{
+    // Construção do cabeçalho da tabela
+    double tempo_total_btree = 0.0;
+    double tempo_total_arquivo = 0.0;
+    double maior_tempo_btree = 0.0;
+    double maior_tempo_arquivo = 0.0;
+    double menor_tempo_btree = 100000.0;
+    double menor_tempo_arquivo = 100000.0;
+
+    btree *arv = criarBTree();
+
+    FILE *arq = fopen(criaArquivo("btree", "Busca"), "w");
+
+    for (int i = 0; i < 10000; i++)
+    {
+        int elemento; // func que le cada linha do arquivo
+        // inserir(arv, elemento.chave,elemento.indice);
+    }
+
+    // Ciclo de repetição de testes
+    for (int i = 0; i < 30; i++)
+    {
+            srand(time(NULL));
+
+            // Gera um número aleatório no intervalo de 1 a 10.000
+            int num_busca = (rand() % 10000) + 1;
+            clock_t start = clock(); // inicia a contagem de tempo
+            int indice = buscar(arv->raiz, num_busca);
+            //imprime linha indice do arquivo
+            clock_t end = clock(); // finaliza contagem de tempo
+
+            tempo_total_btree += ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+            if(((double)(end - start)) * 1000 / CLOCKS_PER_SEC > maior_tempo_btree){
+                maior_tempo_btree = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+            }
+            if(((double)(end - start)) * 1000 / CLOCKS_PER_SEC < menor_tempo_btree){
+                menor_tempo_btree = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+            }
+
+            start = clock(); // inicia a contagem de tempo
+            //busca num_busca no arquivo
+            end = clock(); // finaliza contagem de tempo
+
+            tempo_total_arquivo += ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+            if(((double)(end - start)) * 1000 / CLOCKS_PER_SEC > maior_tempo_arquivo){
+                maior_tempo_arquivo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+            }
+            if(((double)(end - start)) * 1000 / CLOCKS_PER_SEC < menor_tempo_arquivo){
+                menor_tempo_arquivo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+            }
+    }
+
+    FILE *result;
+    result = fopen("resultados.txt", "a");
+    fprintf(result, "\n\n\n-------------------------------------------------------------------------------Tabela 1: Busca na btree------------------------------------------------------------------------------------\n\n");
+
+    fprintf(result, "Média de tempo de busca na btree: %f ms\n", tempo_total_btree / 30);
+    fprintf(result, "Maior tempo de busca na btree: %f ms\n", maior_tempo_btree);
+    fprintf(result, "Menor tempo de busca na btree: %f ms\n", menor_tempo_btree);
+
+    fprintf(result, "\n\n\n-------------------------------------------------------------------------------Tabela 2: Busca no arquivo------------------------------------------------------------------------------------\n\n");
+
+    fprintf(result, "Média de tempo de busca no arquivo: %f ms\n", tempo_total_arquivo / 30);
+    fprintf(result, "Maior tempo de busca no arquivo: %f ms\n", maior_tempo_arquivo);
+    fprintf(result, "Menor tempo de busca no arquivo: %f ms\n", menor_tempo_arquivo);
+
+}
+

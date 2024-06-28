@@ -23,3 +23,4 @@ void unir(btree *arv,no *x, no *y, int indice);
 void emprestar(btree *arv, no *x, no *y, int indice, int pos);
 int buscar(no *no, int chave);
 void balancear(btree *arv, no *no);
+void benchmarkBusca();

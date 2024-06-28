@@ -21,24 +21,26 @@ int main (void){
 
     imprimirPreOrdem(getRaiz(arv));
 
-    remover(getRaiz(arv), 6);
+    remover(arv, getRaiz(arv), 6);
     printf("\n");
 
     imprimirPreOrdem(getRaiz(arv));
-    remover(getRaiz(arv), 41);
+    remover(arv, getRaiz(arv), 41);
     printf("\n");
 
     imprimirPreOrdem(getRaiz(arv));
-    remover(getRaiz(arv), 14);
+    remover(arv, getRaiz(arv), 14);
     printf("\n");
 
     imprimirPreOrdem(getRaiz(arv));
-    remover(getRaiz(arv), 38);
+    remover(arv, getRaiz(arv), 38);
     printf("\n");
 
     imprimirPreOrdem(getRaiz(arv));
     printf("\n");
     printf("%d\n", buscar(getRaiz(arv), 1));
+
+    
 
     return 0;
 }

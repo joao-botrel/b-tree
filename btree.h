@@ -22,3 +22,4 @@ void removerNaoFolha(no *removido, int chave, int indice);
 void unir(no *x, no *y, int indice);
 void emprestar(no *x, no *y, int indice, int pos);
 int buscar(no *no, int chave);
+void balancear(no *no);

@@ -297,6 +297,7 @@ int remover(btree *arv, no *no, int chave)
     {
         removerNaoFolha(arv, no, chave, indice);
     }
+    return 0;
 }
 
 void removerFolha(btree *arv, no *no, int chave, int indice)

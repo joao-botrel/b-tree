@@ -533,5 +533,7 @@ void benchmarkBusca()
     fprintf(result, "Maior tempo de busca no arquivo: %f ms\n", maior_tempo_arquivo);
     fprintf(result, "Menor tempo de busca no arquivo: %f ms\n", menor_tempo_arquivo);
 
+    fclose(result);
+    fclose(arq);
 }
 

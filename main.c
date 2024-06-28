@@ -2,51 +2,66 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(void) {
-  btree *arv;
-  arv = criarBTree();
-  inserir(arv, 14, 0);
-  inserir(arv, 39, 1);
-  inserir(arv, 1, 2);
-  inserir(arv, 6, 3);
-  inserir(arv, 41, 4);
-  inserir(arv, 32, 5);
-  inserir(arv, 8, 6);
-  inserir(arv, 38, 7);
-  inserir(arv, 43, 8);
-  inserir(arv, 3, 9);
-  inserir(arv, 36, 10);
-  inserir(arv, 30, 10);
+int main(void)
+{
+    int ok = 0;
+    // recebe o arquivo
+    btree *arv = criarBTree();
+    // insere arquivo na arvore
+    while (ok != 0)
+    {
+        int escolha;
+        printf("Menu\n");
+        printf("1 - Criar índice\n");
+        printf("2 - Procurar Elementos\n");
+        printf("3 - Remover Registro\n");
+        printf("4 - Sair\n");
 
-  imprimirPreOrdem(getRaiz(arv));
+        scanf("%d", &escolha);
 
-  remover(arv, getRaiz(arv), 6);
-  printf("\n");
+        switch (escolha)
+        {
+        case 1:
+            // criar índice
+            break;
+        case 2:
+            printf("Digite o valor a ser procurado: ");
+            int valor;
+            scanf("%d", &valor);
+            int indice = buscar(getRaiz(arv), valor);
+            if (indice != -1)
+            {
+                printf("Valor não encontrado");
+            }
+            else
+            {
+                // buscar no arquivo
+                // impimir o registro
+            }
+            break;
+        case 3:
+            printf("Digite o valor a ser removido: ");
+            int valor;
+            scanf("%d", &valor);
+            int validacao = remover(arv, getRaiz(arv), valor);
+            if (validacao == -1)
+            {
+                printf("Valor não encontrado");
+            }
+            else
+            {
+                printf("Valor removido com sucesso");
+            }
+            break;
+        case 4:
+            // sair
+            ok = 0;
+            break;
+        default:
+            printf("Opção inválida\n");
+            break;
+        }
+    }
 
-  imprimirPreOrdem(getRaiz(arv));
-  remover(arv, getRaiz(arv), 41);
-  printf("\n");
-
-  imprimirPreOrdem(getRaiz(arv));
-  remover(arv, getRaiz(arv), 14);
-  printf("\n");
-
-  imprimirPreOrdem(getRaiz(arv));
-  remover(arv, getRaiz(arv), 38);
-  printf("\n");
-
-  imprimirPreOrdem(getRaiz(arv));
-  remover(arv, getRaiz(arv), 1);
-  printf("\n");
-
-  inserir(arv, 144, 11);
-  inserir(arv, 13, 12);
-
-  imprimirPreOrdem(getRaiz(arv));
-  remover(arv, getRaiz(arv), 3);
-  printf("\n");
-
-  imprimirPreOrdem(getRaiz(arv));
-
-  return 0;
+    return 0;
 }

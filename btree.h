@@ -12,6 +12,7 @@ no* getRaiz(btree *arv);
 void inserir(btree *arv, int chave, int index);
 void inserirNaoCheio(no *no, int chave, int index);
 void split(no *pai, int i);
+int verificarNecessidadeSplitAteRaiz(no *raiz, int chave);
 void imprimirEmOrdem(no *raiz);
 int remover(no *no, int chave);
 void removerFolha(no *no, int chave, int indice);

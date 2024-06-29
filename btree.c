@@ -62,9 +62,7 @@ void inserir(btree *arv, int chave, int index){
             arv->raiz->pai = novaRaiz; // Atualiza o ponteiro pai
             arv->raiz = novaRaiz;
             split(novaRaiz, 0);
-            novaRaiz->nroChaves = 0;
             inserirNaoCheio(novaRaiz, chave, index); 
-
         } else inserirNaoCheio(arv->raiz, chave, index); //se não, ou é só inserir no nó ou é em outro nó (filhos da raíz)
 
     }
@@ -149,6 +147,29 @@ void split(no *pai, int i){
     pai->index[i] = y->index[ORDEM_MAX / 2 - 1];  
     pai->nroChaves++;
 }
+
+// Função para verificar a necessidade de split até a raiz
+int verificarNecessidadeSplitAteRaiz(no *raiz, int chave) {
+    no *atual = raiz;
+    while (atual != NULL) {
+        if (atual->nroChaves == ORDEM_MAX - 1) {
+            return 1; // Indica necessidade de split até a raiz
+        }
+        int i = 0;
+        // Encontra a posição correta para inserção da chave
+        while (i < atual->nroChaves && chave > atual->chaves[i]) {
+            i++;
+        }
+        // Verifica se a inserção deve descer para o próximo nível
+        if (!atual->folha) {
+            atual = atual->filhos[i];
+        } else {
+            break; // Se é folha, termina a busca
+        }
+    }
+    return 0; // Não há necessidade de split até a raiz
+}
+
 
 //função para imprimir a b-tree em ordem
 void imprimirEmOrdem(no *raiz) {

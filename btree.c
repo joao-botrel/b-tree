@@ -56,22 +56,25 @@ void inserir(btree *arv, int chave, int index){
         novoNo->nroChaves++;
         arv->raiz = novoNo;
     } else { //caso não for raíz,
-        if (arv->raiz->nroChaves == ORDEM_MAX - 1){ //vai ter que dar split na raiz caso ela esteja na capacidade máxima
+         if (arv->raiz->nroChaves == ORDEM_MAX - 1){ //vai ter que dar split na raiz caso ela esteja na capacidade máxima
             no *novaRaiz = inicializarNo(0);
             novaRaiz->filhos[0] = arv->raiz;
             arv->raiz->pai = novaRaiz; // Atualiza o ponteiro pai
-            split(novaRaiz, 0);
             arv->raiz = novaRaiz;
-        } 
-        inserirNaoCheio(arv->raiz, chave, index); //se não, ou é só inserir no nó ou é em outro nó (filhos da raíz)
-        arv->nroChaves++;
+            split(novaRaiz, 0);
+            novaRaiz->nroChaves = 0;
+            inserirNaoCheio(novaRaiz, chave, index); 
+
+        } else inserirNaoCheio(arv->raiz, chave, index); //se não, ou é só inserir no nó ou é em outro nó (filhos da raíz)
+
     }
+    arv->nroChaves++;
 }
 
 //função para inserir em um nó que não está cheio na b-tree
 void inserirNaoCheio(no *no, int chave, int index){
     int i = no->nroChaves - 1;
-    
+
     if (no->folha == 1){ //se o nó for folha, basta inserir nele
         while (i >= 0 && no->chaves[i] > chave){ //achando a posição correta do valor nas chaves do nó
             no->chaves[i + 1] = no->chaves[i];

@@ -16,7 +16,6 @@ int main (void){
     inserir(arv, 43, 8);
     inserir(arv, 3, 9);
     inserir(arv, 36, 10);
-    inserir(arv, 30, 10);
 
 
     imprimirEmOrdem(getRaiz(arv));

@@ -1,6 +1,8 @@
 #include "btree.h"
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct chave {
   int chave;
@@ -9,6 +11,7 @@ typedef struct chave {
 
 typedef struct no {
   int nroChaves;               // numero de chaves atuais no nó
+  int m; //ordem
   chave chaves[ORDEM_MAX - 1]; // vetor de chaves
   struct no *pai;
   struct no *filhos[ORDEM_MAX]; // ponteiros para os filhos do nó
@@ -21,6 +24,14 @@ typedef struct btree {
   struct no *raiz;
   int nroChaves;
 } btree;
+
+//struct do registro do arquivo
+typedef struct registro{
+    int matricula;
+    char *aluno;
+    char *curso;
+    char periodo;
+} registro;
 
 // função para inicializar todos os dados do nó
 no *inicializarNo(int folha) {
@@ -51,6 +62,95 @@ no *getRaiz(btree *arv) {
   if (arv != NULL)
     return arv->raiz;
   return NULL;
+}
+
+void gravarRegistro(char *nomeArquivo, registro reg) {
+  FILE *arquivo = fopen(nomeArquivo, "a+"); 
+  if (arquivo == NULL) {
+      fprintf(stderr, "Erro ao abrir o arquivo.\n");
+      return;
+  }
+
+  //indo para o final
+    fseek(arquivo, 0, SEEK_END);
+  
+  if (ftell(arquivo) > 0) {
+      fprintf(arquivo, "\n");
+  }
+
+    fprintf(arquivo, "%d,%s,%s,%c", reg.matricula, reg.aluno, reg.curso, reg.periodo);
+  fclose(arquivo);
+}
+
+int contarLinhas(const char *nomearq) {
+    FILE *file;
+    int count = 0;
+
+    // Abre o arquivo para leitura
+    file = fopen(nomearq, "rb"); // Abre em modo binário
+    if (file == NULL) {
+        perror("Erro ao abrir o arquivo");
+        return -1; // Retorna -1 em caso de erro
+    }
+
+    // Move para o final do arquivo para calcular o tamanho total
+    fseek(file, 0, SEEK_END);
+
+    // Calcula o número de linhas
+    count = ftell(file) / TAMANHO_LINHA;
+
+    // Fecha o arquivo
+    fclose(file);
+
+    return count-1;
+}
+
+registro *inicializaRegistro(){
+  registro *novoRegistro;
+  novoRegistro = (registro*)malloc(sizeof(registro));
+  if (novoRegistro == NULL){
+    printf("Não há memória suficiente.\n");
+    return NULL;
+  }
+  novoRegistro->aluno = (char*)malloc(TAMANHO_NOME*sizeof(char));
+  if (novoRegistro->aluno == NULL){
+    printf("Não há memória suficiente.\n");
+    return NULL;
+  }
+
+  novoRegistro->curso = (char*)malloc(TAMANHO_CURSO*sizeof(char));
+  if (novoRegistro->curso == NULL){
+    printf("Não há memória suficiente.\n");
+    return NULL;
+  }
+
+  return novoRegistro;
+}
+
+void criaRegistro(btree *arv, char *nomeArquivo){
+  registro *reg;
+  reg = inicializaRegistro();
+  printf("Primeiro, você deve inserir os dados do registro.\n");
+      printf("Insira a matrícula (exatos 6 caracteres númericos); \n");
+  scanf("%d", &reg->matricula);
+  printf("Insira o nome (exatos 14 caracteres, contando espaços); \n");
+  scanf("%s", reg->aluno);
+  printf("Insira o curso (exatos 8 caracteres, contando espaços); \n");
+  scanf("%s", reg->curso);
+  printf("Insira o período (apenas 1 caracter); \n");
+  scanf(" %c", &reg->periodo);
+  insere(arv, nomeArquivo, reg->matricula, *reg);
+  
+}
+
+//função do menu para inserir
+void insere(btree *arv, char *nomeArquivo, int chave, registro registro){
+    //primeiro, insere o registro no arquivo
+    gravarRegistro(nomeArquivo, registro);
+    //depois, pega o número de linhas
+    int index = contarLinhas(nomeArquivo);
+    //depois, insere na árvore
+    inserir(arv, chave, index);
 }
 
 // função para inserir na b-tree
@@ -168,7 +268,7 @@ void imprimirEmOrdem(no *raiz) {
     int i;
     for (i = 0; i < raiz->nroChaves; i++) {
       imprimirEmOrdem(raiz->filhos[i]);
-      printf("Nó: %d ", raiz->chaves[i].chave);
+      printf("Nó: %d Index %d", raiz->chaves[i].chave, raiz->chaves[i].indice);
       if (raiz->pai != NULL) {
         printf("(Pai: %d) ",
                raiz->pai->chaves[0].chave); // Assumindo que estamos imprimindo
@@ -204,6 +304,7 @@ void imprimirPreOrdem(no *raiz) {
   }
 }
 
+//busca direto na b-tree para achar o índice
 int buscar(no *no, int chave) {
   int i = 0;
   while ((i < no->nroChaves) && (chave > no->chaves[i].chave)) {
@@ -329,4 +430,109 @@ void emprestar(no *x, no *y, int indice, int pos) {
     }
   }
   y->nroChaves--;
+}
+
+void processaCarga(btree *arv, char *nomeArquivo)
+{
+
+    FILE *arquivo;
+    int insere;
+    char linha[TAMANHO_LINHA];
+    int index = 0;
+
+    arquivo = fopen(nomeArquivo, "rb");
+
+    if (!arquivo){
+        printf("Erro ao abrir o arquivo!\n");
+        return; 
+    } 
+
+     while (fread(linha, TAMANHO_LINHA, 1, arquivo) == 1) {
+        // Remove o caractere de nova linha, se existir
+        linha[strcspn(linha, "\n")] = '\0';
+
+        // Lê os 5 primeiros números até a vírgula
+        sscanf(linha, "%6d", &insere);
+
+        // Avança para o próximo registro no arquivo
+        fseek(arquivo, 1, SEEK_CUR); // Avança um byte para pular o caractere de nova linha
+        inserir(arv, insere, index);
+        index++;
+    }
+
+    fclose(arquivo);
+}
+
+//função que com o índice da b-tree, faz o cálculo para abrir o arquivo diretamente na linha do registro desejado
+void buscarNoArquivo(btree *arv, char *nomeArq, int index, int chave){
+    char linha[100]; //assumindo um tamanho que seja suficiente para a linha
+    long posicao; //posição no arquivo
+    int tamanho = 33; //tamanho da linha
+  
+    //abrindo o arquivo
+    FILE *arquivo = fopen(nomeArq, "r");
+    if (arquivo == NULL) {
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    //calculando a posição no arquivo
+    posicao = (index) * tamanho;
+
+    //movendo o ponteiro do arquivo para a posição calculado
+    fseek(arquivo, posicao, SEEK_SET);
+
+    //lendo a linha desejada
+    fgets(linha, sizeof(linha), arquivo);
+    printf("Registro encontrado: %s\n", linha);
+
+    //fecha o arquivo
+    fclose(arquivo);
+
+}
+
+//função que percorre o arquivo para achar o registro desejado
+void buscarRegistro(const char *arquivo, int chave) {
+    FILE *arq = fopen(arquivo, "r");
+    if (arq == NULL) {
+        perror("Erro ao abrir o arquivo");
+        return;
+    }
+
+    char linha[100];
+    char chaveStr[7];  //string utilizada para fazer a busca no arquivo
+
+    //convertendo a chave int para um valor char
+    snprintf(chaveStr, sizeof(chaveStr), "%06d", chave);
+
+    while (fgets(linha, sizeof(linha), arq)) {
+        //comparando os primeiros 6 caracteres da linha com a chave
+        if (strncmp(linha, chaveStr, 6) == 0) {
+            printf("Registro encontrado: %s", linha);
+            fclose(arq);
+            return;
+        }
+    }
+
+    printf("Registro com a chave %06d não encontrado.\n", chave);
+    fclose(arq);
+}
+
+//função que é chamada no menu, nela é possível inserir o valor que quer ser procurado e escolhe o tipo de busca que é desejado
+void buscaGeral(btree *arv, char *nomeArq, int valor, int indice){
+  int opcao;
+  printf("Qual tipo de pesquisa você quer fazer? \n");
+  printf("1 - Pesquisar pela B-Tree\n");
+  printf("2 - Pesquisar direto no Arquivo\n");
+  scanf("%d", &opcao);
+
+  if (opcao == 1){
+    buscarNoArquivo(arv, nomeArq, indice, valor);
+    
+  }
+
+  if (opcao == 2){
+    buscarRegistro(nomeArq, valor);
+  }
+  
 }

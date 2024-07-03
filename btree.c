@@ -315,117 +315,256 @@ int buscar(no *no, int chave) {
   }
 }
 
-int remover(no *no, int chave) {
-  int indice = -1;
-  int i = 0;
-  while ((i < no->nroChaves) && (chave > no->chaves[i].chave)) {
-    i++;
-  }
-  if (i < no->nroChaves && chave == no->chaves[i].chave) {
-    indice = i;
-
-  } else if (no->folha == 1) {
-    return -1;
-  }
-  if (indice == -1) {
-    remover(no->filhos[i], chave);
-  } else {
-    if (no->folha == 1) {
-      removerFolha(no, chave, indice);
-    } else {
-      removerNaoFolha(no, chave, indice);
-    }
-  }
-  if (no->nroChaves < ORDEM_MAX / 2 - 1 && no->pai != NULL) {
-    i = 0;
-    while (i < no->pai->nroChaves && no->pai->filhos[i] != no) {
-      if (no->pai->filhos[i] == no) {
-        indice = i;
-        i--;
-      }
-      i++;
-    }
-    if (indice > 0 && no->pai->filhos[indice - 1] != NULL) {
-      if (no->pai->filhos[indice - 1]->nroChaves > ORDEM_MAX / 2 - 1) {
-        emprestar(no, no->pai->filhos[indice - 1], indice,
-                  no->pai->filhos[indice - 1]->nroChaves - 1);
-      } else if (indice < no->pai->nroChaves - 1 &&
-                 no->pai->filhos[indice + 1] != NULL) {
-        if (no->pai->filhos[indice + 1]->nroChaves > ORDEM_MAX / 2 - 1) {
-          emprestar(no, no->pai->filhos[indice + 1], indice, 0);
-        } else {
-          unir(no, no->pai->filhos[indice + 1], indice);
+int remover(btree *arv, no *no, int chave)
+{
+    int indice = -1;
+    int i = 0;
+    // Encontra a chave a ser removida
+    while (indice == -1)
+    {
+        //Procura enquanto chave for maior que a chave do nó e não chegar no final
+        while ((i < no->nroChaves) && (chave > no->chaves[i].chave))
+        {
+            i++;
         }
-      } else {
-        unir(no->pai->filhos[indice - 1], no, indice);
-      }
+        //Se a chave for igual a chave do nó, encontrou a chave
+        if (i < no->nroChaves && chave == no->chaves[i].chave)
+        {
+            indice = i;
+        }
+        //Se não encontrou a chave e é folha, retorna -1
+        else if (no->folha == 1)
+        {
+            return -1;
+        }
+        //Se não encontrou a chave e não é folha, procura nos filhos
+        else
+        {
+            no = no->filhos[i];
+            i = 0;
+        }
     }
-  }
+    //se encontrou a chave, remove
+    if (no->folha == 1)
+    {
+        //Se é folha, chama a função para remover folha
+        removerFolha(arv, no, chave, indice);
+    }
+    else
+    {
+        //Se não é folha, chama a função para remover não folha
+        removerNaoFolha(arv, no, chave, indice);
+    }
+    return 0;
 }
 
-void removerFolha(no *no, int chave, int indice) {
+void removerFolha(btree *arv, no *no, int chave, int indice)
+{
+    //Anota o indice do vetor de chaves da posição a ser removida
+    int j = indice;
+    while (j < no->nroChaves - 1)
+    {
+        //Desloca as chaves posteriores a removida para a esquerda
+        no->chaves[j].chave = no->chaves[j + 1].chave;
+        no->chaves[j].indice = no->chaves[j + 1].indice;
+        j++;
+    }
+    //Decrementa o número de chaves do nó
+    no->nroChaves--;
 
-  int j = indice;
-  while (j < no->nroChaves) {
-    no->chaves[j].chave = no->chaves[j + 1].chave;
-    no->chaves[j].indice = no->chaves[j + 1].indice;
-    j++;
-  }
-  no->nroChaves--;
+    //Se o nó não for a raiz e o número de chaves for menor que a ordem mínima, balanceia
+    if (no->nroChaves < ORDEM_MAX / 2 - 1 && no->pai != NULL)
+    {
+        balancear(arv, no);
+    }
 }
 
-void removerNaoFolha(no *removido, int chave, int indice) {
-  if (removido->filhos[indice]->nroChaves >
-      removido->filhos[indice + 1]->nroChaves) {
+void removerNaoFolha(btree *arv, no *removido, int chave, int indice)
+{
+    //Pegao o filho a esquerda do nó que tem a chave a ser removida
     no *y = removido->filhos[indice];
-    while (y->folha == 0) {
-      y = y->filhos[y->nroChaves];
+    while (y->folha == 0)
+    {
+        //busca o predecessor da chave a ser removida
+        y = y->filhos[y->nroChaves];
     }
+    //Substitui a chave a ser removida pelo predecessor
     removido->chaves[indice].chave = y->chaves[y->nroChaves - 1].chave;
     removido->chaves[indice].indice = y->chaves[y->nroChaves - 1].indice;
-    remover(removido->filhos[indice], y->chaves[y->nroChaves - 1].chave);
-  } else {
-    no *y = removido->filhos[indice + 1];
-    while (y->folha == 0) {
-      y = y->filhos[0];
-    }
-    removido->chaves[indice].chave = y->chaves[0].chave;
-    removido->chaves[indice].indice = y->chaves[0].indice;
-    remover(removido->filhos[indice+1], y->chaves[0].chave);
-  }
+    //Remove o predecessor que foi copiado para a posição da chave removida
+    removerFolha(arv, y, y->chaves[y->nroChaves - 1].chave, y->nroChaves - 1);
 }
 
-void unir(no *x, no *y, int indice) {
-  int i = 0;
-  x->chaves[x->nroChaves].chave = y->pai->chaves[indice].chave;
-  x->chaves[x->nroChaves].indice = y->pai->chaves[indice].indice;
-  x->nroChaves++;
-  for (int j = indice; j < y->pai->nroChaves - 1; j++) {
-    y->pai->chaves[j].chave = y->pai->chaves[j + 1].chave;
-    y->pai->chaves[j].indice = y->pai->chaves[j + 1].indice;
-  }
-  while (i < y->nroChaves) {
-    x->chaves[x->nroChaves].chave = y->chaves[i].chave;
-    x->chaves[x->nroChaves].indice = x->chaves[i].indice;
+void unir(btree *arv, no *x, no *y, int indice)
+{
+    int i = 0;
+    //Copia a chave do pai para o nó x
+    x->chaves[x->nroChaves].chave = y->pai->chaves[indice].chave;
+    x->chaves[x->nroChaves].indice = y->pai->chaves[indice].indice;
+    //Incrementa o número de chaves do nó x
     x->nroChaves++;
-    i++;
-  }
-  free(y);
+    //Desloca as chaves posteriores a chave do pai emprestada do pai para a esquerda
+    for (int j = indice; j < y->pai->nroChaves - 1; j++)
+    {
+        y->pai->chaves[j].chave = y->pai->chaves[j + 1].chave;
+        y->pai->chaves[j].indice = y->pai->chaves[j + 1].indice;
+    }
+    y->pai->nroChaves--;
+    //Desloca as chaves do nó y para o nó x
+    while (i < y->nroChaves)
+    {
+        x->chaves[x->nroChaves].chave = y->chaves[i].chave;
+        x->chaves[x->nroChaves].indice = x->chaves[i].indice;
+        x->nroChaves++;
+        i++;
+    }
+    //Se y não for folha, desloca os filhos de y para x
+    if (y->folha == 0)
+    {
+        x->filhos[x->nroChaves] = y->filhos[i];
+        if (x->filhos[x->nroChaves] != NULL)
+        {
+            x->filhos[x->nroChaves]->pai = x;
+        }
+    }
+    //Libera a memória do nó y que foi unido
+    free(y);
+    //Retira o ponteiro do nó y do pai
+    x->pai->filhos[indice + 1] = NULL;
+    //Se o pai ficar sem chaves, x vira a raiz
+    if (x->pai->pai == NULL)
+    {
+        x->pai = NULL;
+        arv->raiz = x;
+    }
+    else
+    //Se o pai ficar com menos chaves que o mínimo, balanceia
+    if (x->pai != NULL && x->pai->nroChaves < ORDEM_MAX / 2 - 1)
+    {
+        balancear(arv, x->pai);
+    }
 }
 
-void emprestar(no *x, no *y, int indice, int pos) {
-  x->nroChaves++;
-  x->chaves[x->nroChaves - 1].chave = x->pai->chaves[indice].chave;
-  x->chaves[x->nroChaves - 1].indice = x->pai->chaves[indice].indice;
-  x->pai->chaves[indice].chave = y->chaves[pos].chave;
-  x->pai->chaves[indice].indice = y->chaves[pos].indice;
-  if (pos == 0) {
-    for (int i = 0; i < y->nroChaves - 1; i++) {
-      y->chaves[i].chave = y->chaves[i + 1].chave;
-      y->chaves[i].indice = y->chaves[i + 1].indice;
+void emprestar(btree *arv, no *x, no *y, int indice, int pos)
+{
+    //adiciona a chave do pai ao nó x
+    x->nroChaves++;
+    x->chaves[x->nroChaves - 1].chave = x->pai->chaves[indice].chave;
+    x->chaves[x->nroChaves - 1].indice = x->pai->chaves[indice].indice;
+    //adiciona a chave do nó y ao pai
+    x->pai->chaves[indice].chave = y->chaves[pos].chave;
+    x->pai->chaves[indice].indice = y->chaves[pos].indice;
+    //se a posição do elemento retirado de y for 0, o nó emprestou do filho da direita
+    if (pos == 0)
+    {
+        //desloca o filho do elemento emprestado para o nó x
+        x->filhos[x->nroChaves] = y->filhos[pos];
+        y->filhos[pos] = NULL;
+        //se o filho deslocado não for nulo, atualiza o pai
+        if (x->filhos[x->nroChaves] != NULL)
+        {
+            x->filhos[x->nroChaves]->pai = x;
+        }
+        //desloca as chaves do nó y para a esquerda
+        for (int i = 0; i < y->nroChaves - 1; i++)
+        {
+            y->chaves[i].chave = y->chaves[i + 1].chave;
+            y->chaves[i].indice = y->chaves[i + 1].indice;
+            y->filhos[i] = y->filhos[i + 1];
+        }
+        //desloca o último filho de y para a posição anterior ao último elemento
+        y->filhos[y->nroChaves - 1] = y->filhos[y->nroChaves];
+        //atualiza o pai do filho deslocado
+        y->filhos[y->nroChaves] = NULL;
     }
-  }
-  y->nroChaves--;
+    else
+    //se a posição do elemento retirado de y for diferente de 0, o nó emprestou do filho da esquerda
+    {
+        //desloca o filho do elemento deslocado para o nó x
+        x->filhos[x->nroChaves] = y->filhos[pos + 1];
+        y->filhos[pos + 1] = NULL;
+        //se o filho deslocado não for nulo, atualiza o pai
+        if (x->filhos[x->nroChaves] != NULL)
+        {
+            x->filhos[x->nroChaves]->pai = x;
+        }
+        //retira o ponteiro para o filho deslocado
+        y->filhos[pos + 1] = NULL;
+
+    }
+    //diminui o número de chaves do nó y que emprestou
+    y->nroChaves--;
+}
+
+void balancear(btree *arv, no *no)
+{
+    int indice;
+    int i = 0;
+    //encontra o índice do vetor do pai que aponta para o nó que precisa ser balanceado
+    while (i <= no->pai->nroChaves && no->pai->filhos[i] != no)
+    {
+        if (no->pai->filhos[i] == no)
+        {
+            indice = i;
+            i--;
+        }
+        i++;
+    }
+    indice = i;
+
+    //se o nó tiver irmão à esquerda
+    if (indice > 0 && no->pai->filhos[indice - 1] != NULL)
+    {
+        //se o irmão tiver mais que o mínimo de chaves, empresta
+        if (no->pai->filhos[indice - 1]->nroChaves > ORDEM_MAX / 2 - 1)
+        {
+            emprestar(arv, no, no->pai->filhos[indice - 1], indice,
+                      no->pai->filhos[indice - 1]->nroChaves - 1);
+        }
+        //se não, se o nó tiver irmão à direita
+        else if (indice < no->pai->nroChaves - 1 &&
+                 no->pai->filhos[indice + 1] != NULL)
+        {
+            //se o irmão tiver mais que o mínimo de chaves, empresta
+            if (no->pai->filhos[indice + 1]->nroChaves > ORDEM_MAX / 2 - 1)
+            {
+                emprestar(arv, no, no->pai->filhos[indice + 1], indice, 0);
+            }
+            else
+            //se não, une
+            {
+                //sempre passa o nó mais a esquerda para receber os elementos
+                unir(arv, no, no->pai->filhos[indice + 1], indice);
+            }
+        }
+        //se não tem irmão a direita e o irmão a esquerda não pode emprestar, une
+        else
+        {
+            //sempre passa o nó mais a esquerda para receber os elementos
+            unir(arv, no->pai->filhos[indice - 1], no, indice - 1);
+        }
+    }
+    //se não tem irmão a esquerda
+    //se o nó tiver irmão à direita
+    else if (indice < no->pai->nroChaves &&
+             no->pai->filhos[indice + 1] != NULL)
+    {
+        //se o irmão tiver mais que o mínimo de chaves, empresta
+        if (no->pai->filhos[indice + 1]->nroChaves > ORDEM_MAX / 2 - 1)
+        {
+            emprestar(arv, no, no->pai->filhos[indice + 1], indice, 0);
+        }
+        else
+        //se não, une
+        {
+            unir(arv, no, no->pai->filhos[indice + 1], indice);
+        }
+    }
+    //se não tem irmão a direita e o irmão a esquerda não pode emprestar, une
+    else
+    {
+        unir(arv, no->pai->filhos[indice - 1], no, indice - 1);
+    }
 }
 
 void processaCarga(btree *arv, char *nomeArquivo)

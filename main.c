@@ -82,5 +82,6 @@ int main(void)
         }
     }
 
+    free(arv);
     return 0;
 }

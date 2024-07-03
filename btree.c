@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 typedef struct chave {
   int chave;
@@ -86,20 +87,20 @@ int contarLinhas(const char *nomearq) {
     FILE *file;
     int count = 0;
 
-    // Abre o arquivo para leitura
-    file = fopen(nomearq, "rb"); // Abre em modo binário
+    //abre o arquivo para leitura
+    file = fopen(nomearq, "rb"); //abre em modo binário
     if (file == NULL) {
         perror("Erro ao abrir o arquivo");
-        return -1; // Retorna -1 em caso de erro
+        return -1; //retorna -1 em caso de erro
     }
 
-    // Move para o final do arquivo para calcular o tamanho total
+    //move para o final do arquivo para calcular o tamanho total
     fseek(file, 0, SEEK_END);
 
-    // Calcula o número de linhas
+    //calcula o número de linhas
     count = ftell(file) / TAMANHO_LINHA;
 
-    // Fecha o arquivo
+    //fecha o arquivo
     fclose(file);
 
     return count-1;
@@ -155,8 +156,7 @@ void insere(btree *arv, char *nomeArquivo, int chave, registro registro){
 
 // função para inserir na b-tree
 void inserir(btree *arv, int chave, int index) {
-  if (arv->raiz == NULL) { // primeiro nó da árvore, é a raíz, então é
-                           // necessário ajustar todos detalhes quanto à isso
+  if (arv->raiz == NULL) { // primeiro nó da árvore, é a raíz, então é necessário ajustar todos detalhes quanto à isso
     no *novoNo = inicializarNo(1);
     novoNo->chaves[0].chave = chave;
     novoNo->chaves[0].indice = index;
@@ -164,8 +164,7 @@ void inserir(btree *arv, int chave, int index) {
     arv->raiz = novoNo;
   } else { // caso não for raíz,
     if (arv->raiz->nroChaves ==
-        ORDEM_MAX - 1) { // vai ter que dar split na raiz caso ela esteja na
-                         // capacidade máxima
+        ORDEM_MAX - 1) { // vai ter que dar split na raiz caso ela esteja na capacidade máxima
       no *novaRaiz = inicializarNo(0);
       novaRaiz->filhos[0] = arv->raiz;
       arv->raiz->pai = novaRaiz; // Atualiza o ponteiro pai
@@ -173,8 +172,7 @@ void inserir(btree *arv, int chave, int index) {
       arv->raiz = novaRaiz;
     }
     inserirNaoCheio(arv->raiz, chave,
-                    index); // se não, ou é só inserir no nó ou é em outro nó
-                            // (filhos da raíz)
+                    index); // se não, ou é só inserir no nó ou é em outro nó (filhos da raíz)
     arv->nroChaves++;
   }
 }
@@ -213,56 +211,55 @@ void inserirNaoCheio(no *no, int chave, int index) {
   }
 }
 
-// função que realiza a operação de split na b-tree
+//função que realiza a operação de split na b-tree
 void split(no *pai, int i) {
   no *y = pai->filhos[i];
   no *novoNo = inicializarNo(y->folha);
 
   novoNo->nroChaves = ORDEM_MAX / 2 - 1;
-  novoNo->pai = pai; // Atualiza o ponteiro pai do novo nó
+  novoNo->pai = pai; //atualiza o ponteiro pai do novo nó
 
-  // Os dois primeiros loops são feitos para mover os dados dos filhos do nó pai
-  // para o novo nó filho Loop para as chaves
+  //os dois primeiros loops são feitos para mover os dados dos filhos do nó pai
+  // ara o novo nó filho Loop para as chaves
   for (int j = 0; j < ORDEM_MAX / 2 - 1; j++) {
     novoNo->chaves[j].chave = y->chaves[j + ORDEM_MAX / 2].chave;
     novoNo->chaves[j].indice = y->chaves[j + ORDEM_MAX / 2].indice;
   }
 
-  // Loop para os ponteiros dos filhos
+  //loop para os ponteiros dos filhos
   if (y->folha == 0) {
     for (int j = 0; j < ORDEM_MAX / 2; j++) {
       novoNo->filhos[j] = y->filhos[j + ORDEM_MAX / 2];
       if (novoNo->filhos[j] != NULL) {
         novoNo->filhos[j]->pai =
-            novoNo; // Atualiza o ponteiro pai dos filhos do novo nó
+            novoNo; //atualiza o ponteiro pai dos filhos do novo nó
       }
     }
   }
 
   y->nroChaves = ORDEM_MAX / 2 - 1;
 
-  // Os dois últimos loops são shifts para inserir o novo filho no seu lugar
-  // certo no nó pai Neste loop, é para achar o lugar correto para inseri-lo nos
-  // ponteiros de filhos
+  //os dois últimos loops são shifts para inserir o novo filho no seu lugar certo no nó pai 
+  //Neste loop, é para achar o lugar correto para inseri-lo nos ponteiros de filhos
   for (int j = pai->nroChaves; j > i; j--) {
     pai->filhos[j + 1] = pai->filhos[j];
   }
 
-  // Lugar achado, inserindo:
+  //lugar achado, inserindo:
   pai->filhos[i + 1] = novoNo;
 
-  // Neste loop, é para achar o lugar correto para inseri-lo nas chaves
+  //neste loop, é para achar o lugar correto para inseri-lo nas chaves
   for (int j = pai->nroChaves - 1; j >= i; j--) {
     pai->chaves[j + 1].chave = pai->chaves[j].chave;
     pai->chaves[j + 1].indice = pai->chaves[j].indice;
   }
-  // Lugar achado, inserindo:
+  //lugar achado, inserindo:
   pai->chaves[i].chave = y->chaves[ORDEM_MAX / 2 - 1].chave;
   pai->chaves[i].indice = y->chaves[ORDEM_MAX / 2 - 1].indice;
   pai->nroChaves++;
 }
 
-// função para imprimir a b-tree em ordem
+//função para imprimir a b-tree em ordem
 void imprimirEmOrdem(no *raiz) {
   if (raiz != NULL) {
     int i;
@@ -271,8 +268,7 @@ void imprimirEmOrdem(no *raiz) {
       printf("Nó: %d Index %d", raiz->chaves[i].chave, raiz->chaves[i].indice);
       if (raiz->pai != NULL) {
         printf("(Pai: %d) ",
-               raiz->pai->chaves[0].chave); // Assumindo que estamos imprimindo
-                                            // a primeira chave do pai
+               raiz->pai->chaves[0].chave); //assumindo que estamos imprimindo a primeira chave do pai
       } else {
         printf("(Pai: NULL) ");
       }
@@ -282,22 +278,22 @@ void imprimirEmOrdem(no *raiz) {
   }
 }
 
+//função para imprimir a b-tree em pré-ordem
 void imprimirPreOrdem(no *raiz) {
   if (raiz != NULL) {
-    // Primeiro, imprima o nó atual
+    //primeiro, imprima o nó atual
     int i;
     for (i = 0; i < raiz->nroChaves; i++) {
       printf("Nó: %d ", raiz->chaves[i].chave);
       if (raiz->pai != NULL) {
         printf("(Pai: %d) ",
-               raiz->pai->chaves[0].chave); // Assumindo que estamos imprimindo
-                                            // a primeira chave do pai
+               raiz->pai->chaves[0].chave); //assumindo que estamos imprimindo a primeira chave do pai
       } else {
         printf("(Pai: NULL) ");
       }
       printf("\n");
     }
-    // Depois, chame recursivamente a função para cada filho
+    //depois, chame recursivamente a função para cada filho
     for (i = 0; i <= raiz->nroChaves; i++) {
       imprimirPreOrdem(raiz->filhos[i]);
     }
@@ -448,14 +444,14 @@ void processaCarga(btree *arv, char *nomeArquivo)
     } 
 
      while (fread(linha, TAMANHO_LINHA, 1, arquivo) == 1) {
-        // Remove o caractere de nova linha, se existir
+        //remove o caractere de nova linha, se existir
         linha[strcspn(linha, "\n")] = '\0';
 
-        // Lê os 5 primeiros números até a vírgula
+        //lê os 5 primeiros números até a vírgula
         sscanf(linha, "%6d", &insere);
 
-        // Avança para o próximo registro no arquivo
-        fseek(arquivo, 1, SEEK_CUR); // Avança um byte para pular o caractere de nova linha
+        //avança para o próximo registro no arquivo
+        fseek(arquivo, 1, SEEK_CUR); //avança um byte para pular o caractere de nova linha
         inserir(arv, insere, index);
         index++;
     }
@@ -465,6 +461,7 @@ void processaCarga(btree *arv, char *nomeArquivo)
 
 //função que com o índice da b-tree, faz o cálculo para abrir o arquivo diretamente na linha do registro desejado
 void buscarNoArquivo(btree *arv, char *nomeArq, int index, int chave){
+    clock_t inicio = clock();
     char linha[100]; //assumindo um tamanho que seja suficiente para a linha
     long posicao; //posição no arquivo
     int tamanho = 33; //tamanho da linha
@@ -488,11 +485,28 @@ void buscarNoArquivo(btree *arv, char *nomeArq, int index, int chave){
 
     //fecha o arquivo
     fclose(arquivo);
+  
+    clock_t fim = clock();
+    //calculando o tempo de execução em milissegundos
+    double tempo_execucao_ms = ((double)(fim - inicio) / CLOCKS_PER_SEC) * 1000;
 
+    //escrevendo o tempo de execução no arquivo busca-btree.txt
+    FILE *arquivo_saida = fopen("busca-btree.txt", "a");
+    if (arquivo_saida == NULL) {
+        perror("Erro ao abrir o arquivo de saída");
+        return;
+    }
+
+    fprintf(arquivo_saida, "Tempo de execução da função: %.6f ms\n", tempo_execucao_ms);
+
+    // Fechando o arquivo de saída
+    fclose(arquivo_saida);
 }
 
 //função que percorre o arquivo para achar o registro desejado
 void buscarRegistro(const char *arquivo, int chave) {
+    clock_t inicio = clock();
+    int achar = 0;
     FILE *arq = fopen(arquivo, "r");
     if (arq == NULL) {
         perror("Erro ao abrir o arquivo");
@@ -510,12 +524,28 @@ void buscarRegistro(const char *arquivo, int chave) {
         if (strncmp(linha, chaveStr, 6) == 0) {
             printf("Registro encontrado: %s", linha);
             fclose(arq);
-            return;
+            achar = 1;
         }
     }
 
-    printf("Registro com a chave %06d não encontrado.\n", chave);
+    if (achar == 0) printf("Registro com a chave %06d não encontrado.\n", chave);
     fclose(arq);
+
+  clock_t fim = clock();
+  //calculando o tempo de execução em milissegundos
+  double tempo_execucao_ms = ((double)(fim - inicio) / CLOCKS_PER_SEC) * 1000;
+
+  //escrevendo o tempo de execução no arquivo busca-btree.txt
+  FILE *arquivo_saida = fopen("busca-arquivo.txt", "a");
+  if (arquivo_saida == NULL) {
+      perror("Erro ao abrir o arquivo de saída");
+      return;
+  }
+
+  fprintf(arquivo_saida, "Tempo de execução da função: %.6f ms\n", tempo_execucao_ms);
+
+  // Fechando o arquivo de saída
+  fclose(arquivo_saida);
 }
 
 //função que é chamada no menu, nela é possível inserir o valor que quer ser procurado e escolhe o tipo de busca que é desejado

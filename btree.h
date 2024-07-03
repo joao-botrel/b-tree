@@ -1,10 +1,8 @@
 
-#define ORDEM_MAX 4
+#define ORDEM_MAX 8
 #define TAMANHO_LINHA 32
 #define TAMANHO_NOME 14
 #define TAMANHO_CURSO 8
-#include <stdio.h>
-#include <stdlib.h>
 
 //estrutura do nó da b-tree
 typedef struct no no;
@@ -54,4 +52,6 @@ void emprestar(no *x, no *y, int indice, int pos);
 
 //processa o arquivo e coloca suas chaves na árvore
 void processaCarga(btree *arv, char *nomeArquivo);
+
+
 

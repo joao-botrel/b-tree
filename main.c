@@ -7,12 +7,12 @@ int main(void)
 {
     int ok = -1;
     char nomearquivo[50];
-    // cria árvore
+    //cria árvore
     btree *arv = criarBTree();
     printf("Digite o nome do arquivo(com extensão .txt) para ser lido. \n");
     printf("ATENÇÃO! O arquivo deve seguir um padrão rigído para a busca direta no mesmo. Ele deve conter 6 números (chave primária), após isso uma vírgula, depois 14 caracteres (nome do aluno), após isso uma vírgula, depois 8 caracteres(nome do curso), após isso uma vírgula e por último um caracter de número (período atual do aluno).\n");
     scanf("%s", nomearquivo);
-    // insere arquivo na arvore
+    //insere arquivo na arvore
     processaCarga(arv, nomearquivo);
     
     while (ok != 0)
@@ -22,8 +22,7 @@ int main(void)
         printf("1 - Criar índice\n");
         printf("2 - Procurar Elementos\n");
         printf("3 - Remover Registro\n");
-        printf("4 - Imprimir a árvore\n");                        
-        printf("5 - Sair\n");
+        printf("4 - Imprimir a árvore\n");                        printf("5 - Sair\n");
 
 
         scanf("%d", &escolha);

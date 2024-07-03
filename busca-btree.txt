@@ -1,0 +1,2 @@
+Tempo de execução da função: 0.065000 ms
+Tempo de execução da função: 0.040000 ms
